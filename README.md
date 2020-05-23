@@ -3,6 +3,8 @@
 #  KeyboardSnake
 Snake on any Logitech RGB Keyboard
 
+**If you want to implement this for your personal RGB-Keyboard, feel free to create a pullrequest!**
+
 ## Installing and running
 
 Download the latest [release](https://github.com/joblo2213/KeyboardSnake/releases). Make sure you have the right version for your jre.
