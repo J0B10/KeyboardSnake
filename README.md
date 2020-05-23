@@ -16,7 +16,7 @@ java -jar KeyboardSnake-x64.jar
 ```
 
 There are also some parameters to change the game settings:
- * `--speed=1000` / `-s=1000` change the game speed (higher numbers are slower)
+ * `--speed=1000` / `-s=1000` change the game speed (higher numbers are slower, default is 500 which means snake moves twice every scond)
  * `--border` / `-b` activate the border so that you can't pass through walls to apear on the other side
  * `--monochrome` / `-m` no colors, only black/white
  
