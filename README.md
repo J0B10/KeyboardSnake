@@ -1,4 +1,6 @@
-# KeyboardSnake
+<p><img align="right" width="128" height="128" src="icon.png"></p> 
+
+#  KeyboardSnake
 Snake on any Logitech RGB Keyboard
 
 ## Building 
