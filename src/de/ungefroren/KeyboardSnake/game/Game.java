@@ -5,9 +5,14 @@ import de.ungefroren.KeyboardSnake.keyboard.LogitechKeyboardLights;
 import de.ungefroren.KeyboardSnake.nativehook.NativeKeyboardListener;
 import org.jnativehook.keyboard.NativeKeyEvent;
 
-import java.awt.*;
+import java.awt.Color;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
+import java.util.Queue;
+import java.util.Random;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.logging.Level;
 
 public class Game extends Thread {
@@ -31,8 +36,8 @@ public class Game extends Thread {
     private final PlayingField field;
     private final Snake snake;
     private final long tickrate;
+    private final Queue<Direction> nextDirections;
     private Pos food = null;
-    private volatile Direction nextDirection = null;
     private Direction movementDirection;
 
     public Game(long tickrate, boolean hasBorder, LogitechKeyboardLights lights) {
@@ -54,15 +59,15 @@ public class Game extends Thread {
                 ? Arrays.asList(p, p.plusX(1), p.plusX(2))
                 : Arrays.asList(p.plusX(2), p.plusX(1), p);
         snake = new Snake(body, field);
+        nextDirections = new ConcurrentLinkedQueue<>();
         this.start();
     }
 
     @Override
     public void run() {
         while (!interrupted()) {
-            if (nextDirection != null && !nextDirection.opposite(movementDirection)) {
-                movementDirection = nextDirection;
-                nextDirection = null;
+            if (!nextDirections.isEmpty() && !nextDirections.peek().opposite(movementDirection)) {
+                movementDirection = nextDirections.poll();
             }
             if (food == null) spawnFood();
             final boolean alive = snake.move(movementDirection);
@@ -130,19 +135,19 @@ public class Game extends Thread {
     }
 
     public synchronized void inputUP() {
-        nextDirection = Direction.UP;
+        nextDirections.add(Direction.UP);
     }
 
     public synchronized void inputDown() {
-        nextDirection = Direction.DOWN;
+        nextDirections.add(Direction.DOWN);
     }
 
     public synchronized void inputLeft() {
-        nextDirection = Direction.LEFT;
+        nextDirections.add(Direction.LEFT);
     }
 
     public synchronized void inputRight() {
-        nextDirection = Direction.RIGHT;
+        nextDirections.add(Direction.RIGHT);
     }
 
     public synchronized void inputPause() {
