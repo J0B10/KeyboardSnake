@@ -31,7 +31,6 @@ public class Game extends Thread {
     private final PlayingField field;
     private final Snake snake;
     private final long tickrate;
-    private int hue = 0;
     private Pos food = null;
     private volatile Direction nextDirection = null;
     private Direction movementDirection;
@@ -72,6 +71,7 @@ public class Game extends Thread {
                     food = null;
                     snake.eat();
                 }
+                snake.shiftColor();
                 updateLights();
             } else {
                 onDeath();
@@ -95,17 +95,18 @@ public class Game extends Thread {
         lights.setLightning(LogiLED.ARROW_RIGHT, BUTTONS);
         lights.setLightning(LogiLED.PAUSE_BREAK, BUTTONS);
         if (food != null) lights.setLightning(field.getKeyCode(food), FOOD);
-        snake.getBody().forEach(p -> lights.setLightning(field.getKeyCode(p), rainbowSnake()));
+
+        snake.forEach((pos, color) -> lights.setLightning(field.getKeyCode(pos), color));
     }
 
     private void onWin() {
         try {
             for (int i = 0; i < 5; i++) {
                 lights.setLightning(WIN);
-                snake.getBody().forEach(p -> lights.setLightning(field.getKeyCode(p), rainbowSnake()));
+                snake.forEach((pos, color) -> lights.setLightning(field.getKeyCode(pos), color));
                 Thread.sleep(200);
                 lights.setLightning(Color.BLACK);
-                snake.getBody().forEach(p -> lights.setLightning(field.getKeyCode(p), rainbowSnake()));
+                snake.forEach((pos, color) -> lights.setLightning(field.getKeyCode(pos), color));
                 Thread.sleep(200);
             }
             exit();
@@ -117,10 +118,10 @@ public class Game extends Thread {
         try {
             for (int i = 0; i < 5; i++) {
                 lights.setLightning(DEATH);
-                snake.getBody().forEach(p -> lights.setLightning(field.getKeyCode(p), rainbowSnake()));
+                snake.forEach((pos, color) -> lights.setLightning(field.getKeyCode(pos), color));
                 Thread.sleep(200);
                 lights.setLightning(Color.BLACK);
-                snake.getBody().forEach(p -> lights.setLightning(field.getKeyCode(p), rainbowSnake()));
+                snake.forEach((pos, color) -> lights.setLightning(field.getKeyCode(pos), color));
                 Thread.sleep(200);
             }
             exit();
@@ -165,8 +166,4 @@ public class Game extends Thread {
         } while (snake.getBody().contains(food));
     }
 
-    private Color rainbowSnake() {
-        if (hue++ > 64) hue = 0;
-        return Color.getHSBColor(hue / 64f, 1, 1);
-    }
 }
