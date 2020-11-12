@@ -13,9 +13,12 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
-public class Game extends Thread {
+public class Game implements Runnable {
 
     private static final int[][] KEYS = new int[][]{
             {LogiLED.ONE, LogiLED.TWO, LogiLED.THREE, LogiLED.FOUR, LogiLED.FIVE, LogiLED.SIX, LogiLED.SEVEN, LogiLED.EIGHT, LogiLED.NINE, LogiLED.ZERO},
@@ -32,6 +35,7 @@ public class Game extends Thread {
             WIN = Color.GREEN;
     private final LogitechKeyboardLights lights;
     private final NativeKeyboardListener keyboardListener;
+    private final ScheduledExecutorService executor;
     private final Random rng = new Random();
     private final PlayingField field;
     private final Snake snake;
@@ -60,35 +64,34 @@ public class Game extends Thread {
                 : Arrays.asList(p.plusX(2), p.plusX(1), p);
         snake = new Snake(body, field);
         nextDirections = new ConcurrentLinkedQueue<>();
-        this.start();
+
+        executor = Executors.newSingleThreadScheduledExecutor();
+        executor.scheduleAtFixedRate(this, 0, tickrate, TimeUnit.MILLISECONDS);
     }
 
     @Override
     public void run() {
-        while (!interrupted()) {
-            if (!nextDirections.isEmpty() && !nextDirections.peek().opposite(movementDirection)) {
-                movementDirection = nextDirections.poll();
+        while (!nextDirections.isEmpty()) {
+            Direction next = nextDirections.poll();
+            if (next != movementDirection && !movementDirection.opposite(next)) {
+                movementDirection = next;
+                break;
             }
-            if (food == null) spawnFood();
-            final boolean alive = snake.move(movementDirection);
-            if (alive) {
-                if (food.equals(snake.getHead())) {
-                    food = null;
-                    snake.eat();
-                }
-                snake.shiftColor();
-                updateLights();
-            } else {
-                onDeath();
+        }
+        if (food == null) spawnFood();
+        final boolean alive = snake.move(movementDirection);
+        if (alive) {
+            if (food.equals(snake.getHead())) {
+                food = null;
+                snake.eat();
             }
-            if (snake.getBody().size() == field.getHeight() * field.getWidth()) {
-                onWin();
-            }
-            try {
-                Thread.sleep(tickrate);
-            } catch (InterruptedException e) {
-                return;
-            }
+            snake.shiftColor();
+            updateLights();
+        } else {
+            onDeath();
+        }
+        if (snake.getBody().size() == field.getHeight() * field.getWidth()) {
+            onWin();
         }
     }
 
@@ -156,7 +159,7 @@ public class Game extends Thread {
 
     public void exit() {
         new Thread(() -> {
-            this.interrupt();
+            executor.shutdownNow();
             keyboardListener.close();
             lights.close();
             System.exit(0);
